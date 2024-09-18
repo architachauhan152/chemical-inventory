@@ -1,4 +1,4 @@
-const data = [
+let data = [
   {
     id: 1,
     "Chemical name": "Acetone",
@@ -166,9 +166,11 @@ const data = [
   },
 ];
 
+
 let selectedRowIndex = -1;
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadDataFromStorage(); 
   populateTable();
 });
 
@@ -178,20 +180,31 @@ function populateTable() {
 
   data.forEach((row, index) => {
     let tr = document.createElement("tr");
-    Object.values(row).forEach((value) => {
+    Object.keys(row).forEach((key) => {
       let td = document.createElement("td");
-      td.textContent = value;
+      td.textContent = row[key];
+      td.setAttribute("contenteditable", true);
+
+      td.addEventListener("blur", () => {
+        data[index][key] = td.textContent; 
+        saveDataToStorage(); 
+      });
       tr.appendChild(td);
     });
     tr.addEventListener("click", () => {
-      if (selectedRowIndex !== -1) {
-        tbody.rows[selectedRowIndex].classList.remove("selected");
-      }
-      tr.classList.add("selected");
-      selectedRowIndex = index;
+      highlightRow(index, tr);
     });
     tbody.appendChild(tr);
   });
+}
+
+function highlightRow(index, row) {
+  const tbody = document.getElementById("tableBody");
+  if (selectedRowIndex !== -1) {
+    tbody.rows[selectedRowIndex].classList.remove("selected");
+  }
+  row.classList.add("selected");
+  selectedRowIndex = index;
 }
 
 function sortTable(columnIndex) {
@@ -205,13 +218,9 @@ function sortTable(columnIndex) {
     const cellB = b.cells[columnIndex].textContent.trim();
 
     if (!isNaN(cellA) && !isNaN(cellB)) {
-      return isAscending
-        ? parseFloat(cellA) - parseFloat(cellB)
-        : parseFloat(cellB) - parseFloat(cellA);
+      return isAscending ? parseFloat(cellA) - parseFloat(cellB) : parseFloat(cellB) - parseFloat(cellA);
     } else {
-      return isAscending
-        ? cellA.localeCompare(cellB)
-        : cellB.localeCompare(cellA);
+      return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
     }
   });
 
@@ -229,10 +238,11 @@ function addRow() {
     Packaging: prompt("Enter Packaging:"),
     "Pack size": prompt("Enter Pack size:"),
     Unit: prompt("Enter Unit:"),
-    Quantity: parseInt(prompt("Enter Quantity:"), 10),
+    Quantity: parseInt(prompt("Enter Quantity:"), 10)
   };
 
   data.push(newRow);
+  saveDataToStorage(); 
   populateTable();
 }
 
@@ -243,11 +253,9 @@ function moveRowUp() {
   const row = tbody.rows[selectedRowIndex];
   tbody.insertBefore(row, tbody.rows[selectedRowIndex - 1]);
 
-  [data[selectedRowIndex], data[selectedRowIndex - 1]] = [
-    data[selectedRowIndex - 1],
-    data[selectedRowIndex],
-  ];
+  [data[selectedRowIndex], data[selectedRowIndex - 1]] = [data[selectedRowIndex - 1], data[selectedRowIndex]];
   selectedRowIndex--;
+  saveDataToStorage();
 }
 
 function moveRowDown() {
@@ -257,17 +265,16 @@ function moveRowDown() {
   const row = tbody.rows[selectedRowIndex];
   tbody.insertBefore(row, tbody.rows[selectedRowIndex + 2] || null);
 
-  [data[selectedRowIndex], data[selectedRowIndex + 1]] = [
-    data[selectedRowIndex + 1],
-    data[selectedRowIndex],
-  ];
+  [data[selectedRowIndex], data[selectedRowIndex + 1]] = [data[selectedRowIndex + 1], data[selectedRowIndex]];
   selectedRowIndex++;
+  saveDataToStorage();
 }
 
 function deleteRow() {
   if (selectedRowIndex === -1) return;
 
   data.splice(selectedRowIndex, 1);
+  saveDataToStorage();
   populateTable();
   selectedRowIndex = -1;
 }
@@ -276,8 +283,24 @@ function refreshData() {
   populateTable();
 }
 
-function saveData() {
-  const json = JSON.stringify(data, null, 2);
-  console.log("Data saved:", json);
-  alert("Data saved to console.");
+function searchTable() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const rows = document.querySelectorAll("#tableBody tr");
+
+  rows.forEach(row => {
+    const cells = Array.from(row.getElementsByTagName("td"));
+    const match = cells.some(td => td.textContent.toLowerCase().includes(input));
+    row.style.display = match ? "" : "none";
+  });
+}
+
+function saveDataToStorage() {
+  localStorage.setItem('chemicalData', JSON.stringify(data));
+}
+
+function loadDataFromStorage() {
+  const savedData = localStorage.getItem('chemicalData');
+  if (savedData) {
+    data = JSON.parse(savedData);
+  }
 }

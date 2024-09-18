@@ -15,7 +15,7 @@
             <button onclick="moveRowDown()">Move Row Down</button>
             <button onclick="deleteRow()">Delete Row</button>
             <button onclick="refreshData()">Refresh Data</button>
-            <button onclick="saveData()">Save Data</button>
+            <input type="text" id="searchInput" placeholder="Search Chemicals..." onkeyup="searchTable()">
         </div>
         <table id="chemicalTable">
             <thead>
@@ -29,7 +29,7 @@
                     <th onclick="sortTable(6)">Pack Size</th>
                     <th onclick="sortTable(7)">Unit</th>
                     <th onclick="sortTable(8)">Quantity</th>
-                                    </tr>
+                </tr>
             </thead>
             <tbody id="tableBody">
             </tbody>
